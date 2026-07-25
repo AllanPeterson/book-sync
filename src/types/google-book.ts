@@ -7,5 +7,5 @@ export interface GoogleBook {
   categories: string[];
   language: string;
   description: string;
-  thumbnail: string;
+  thumbnail: string | null;
 }

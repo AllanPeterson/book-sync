@@ -1,6 +1,7 @@
 import { GoogleBook } from '../types/google-book.js';
+import { GoogleBooksResponse } from '../types/google-books-response.js';
 
-export function mapGoogleBook(data: any): GoogleBook {
+export function mapGoogleBook(data: GoogleBooksResponse): GoogleBook {
   const volumeInfo = data.items?.[0]?.volumeInfo;
 
   if (!volumeInfo) {
@@ -16,6 +17,6 @@ export function mapGoogleBook(data: any): GoogleBook {
     categories: volumeInfo.categories ?? [],
     language: volumeInfo.language ?? '',
     description: volumeInfo.description ?? '',
-    thumbnail: volumeInfo.imageLinks?.thumbnail ?? '',
+    thumbnail: volumeInfo.imageLinks?.thumbnail ?? null,
   };
 }
