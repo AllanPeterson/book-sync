@@ -1,9 +1,8 @@
 import { notion } from '../config/notion.js';
 import { env } from '../config/env.js';
-import { isPageObject } from '../utils/notion.util.js';
+import { isPageObject, getRichTextProperty, getOptionalRichTextProperty } from '../utils/notion.util.js';
 import { PageObjectResponse } from '@notionhq/client/build/src/api-endpoints.js';
 import { GoogleBook } from '../types/google-book.js';
-import { url } from 'node:inspector';
 
 export async function validateConection(): Promise<void> {
     await notion.databases.retrieve({
@@ -21,41 +20,76 @@ export async function getDatabaseProperties() {
 export async function getPendingBooks(): Promise<PageObjectResponse[]> {
   const response = await notion.databases.query({
     database_id: env.NOTION_DATABASE_ID,
-    filter: {
-      and: [
-        {
-          property: 'ISBN',
-          rich_text: {
-            is_not_empty: true,
-          },
-        },
-        {
-          property: 'Google API',
-          select: {
-            does_not_equal: 'Found',
-          },
-        },
-      ],
-    },
   });
 
   return response.results.filter(isPageObject);
-
 }
 
 export async function updateBook(
-    pageId: string,
-    book: GoogleBook,
-  ): Promise<void> {
+  page: PageObjectResponse,
+  book: GoogleBook,
+): Promise<void> {
 
-    await notion.pages.update({
-      page_id: pageId,
-      properties: buildBookProperties(book),
-    });
+  const currentIsbn = getOptionalRichTextProperty(page, 'ISBN');
 
+  const properties: Record<string, any> = buildBookProperties(book);
+
+  if (!currentIsbn && book.isbn) {
+    properties.ISBN = {
+      rich_text: [
+        {
+          text: {
+            content: book.isbn,
+          },
+        },
+      ],
+    };
   }
 
-function buildBookProperties(book: GoogleBook) {
+  await notion.pages.update({
+    page_id: page.id,
+    properties,
+
+    ...(book.thumbnail && {
+      cover: {
+        type: 'external',
+        external: {
+          url: book.thumbnail,
+        },
+      },
+    }),
+  });
+}
+    
+
+export async function markBookAsNotFound(
+  pageId: string,
+): Promise<void> {
+
+  await notion.pages.update({
+  page_id: pageId,
+  properties: buildNotFoundProperties(),
+});
+
+}
+
+function buildNotFoundProperties() {
+  return {
+    'Google API': {
+      select: {
+        name: 'Not found',
+      },
+    },
+
+    'API update on': {
+      date: {
+        start: new Date().toISOString(),
+      },
+    },
+  };
+}
+
+function buildBookProperties(book: GoogleBook){
     return {
       'Book name': {
         title: [
@@ -65,7 +99,7 @@ function buildBookProperties(book: GoogleBook) {
             },
           },
         ],
-      },
+      }, 
 
       Author: {
       rich_text: [

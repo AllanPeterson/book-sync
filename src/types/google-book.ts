@@ -1,4 +1,5 @@
 export interface GoogleBook {
+  isbn: string;
   title: string;
   authors: string[];
   publisher: string;

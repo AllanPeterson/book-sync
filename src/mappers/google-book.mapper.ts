@@ -8,7 +8,14 @@ export function mapGoogleBook(data: GoogleBooksResponse): GoogleBook {
     throw new Error('Book not found.');
   }
 
+  const identifiers = volumeInfo.industryIdentifiers ?? [];
+  const isbn13 = 
+    identifiers.find((id) => id.type === 'ISBN_13')?.identifier ??
+    identifiers.find((id) => id.type === 'ISBN_10')?.identifier ??
+    '';
+
   return {
+    isbn: isbn13,
     title: volumeInfo.title ?? '',
     authors: volumeInfo.authors ?? [],
     publisher: volumeInfo.publisher ?? '',

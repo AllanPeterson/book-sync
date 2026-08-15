@@ -15,6 +15,23 @@ export function isPageObject(
   return result.object === 'page' && 'properties' in result;
 }
 
+export function getOptionalRichTextProperty(
+  page: PageObjectResponse,
+  propertyName: string,
+): string | null {
+  const property = page.properties[propertyName];
+
+  if (!property || property.type !== 'rich_text') {
+    throw new Error(`Property "${propertyName}" is not a rich_text property.`);
+  }
+
+  if (property.rich_text.length === 0) {
+    return null;
+  }
+
+  return property.rich_text[0]?.plain_text ?? null;
+}
+
 export function getRichTextProperty(
   page: PageObjectResponse,
   propertyName: string,

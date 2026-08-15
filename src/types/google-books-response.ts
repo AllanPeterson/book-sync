@@ -9,6 +9,10 @@ export interface GoogleBooksResponse {
       categories?: string[];
       language?: string;
       description?: string;
+      industryIdentifiers?: {
+        type: string;
+        identifier: string;
+      }[];
       imageLinks?: {
         thumbnail?: string | null;
       };
